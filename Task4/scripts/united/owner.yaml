@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: owner-service-account
+  namespace: smart-devices
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: smart-devices
+  name: owner-role
+rules:
+  - apiGroups: [""]
+    resources: ["services", "configmaps", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: owner-role-binding
+  namespace: smart-devices
+subjects:
+  - kind: ServiceAccount
+    name: owner-service-account
+    namespace: smart-devices
+roleRef:
+  kind: Role
+  name: owner-role
+  apiGroup: rbac.authorization.k8s.io
