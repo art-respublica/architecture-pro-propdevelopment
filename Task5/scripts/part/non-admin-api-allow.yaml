@@ -1,0 +1,79 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: non-admin-api-allow-from-front-to-back
+  namespace: smart-devices
+spec:
+  podSelector:
+    matchLabels:
+      role: back-end-api # На кого действует правило
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: front-end # Кому разрешено входить
+      ports:
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              role: front-end # Куда разрешено выходить
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: non-admin-api-allow-from-back-to-front
+  namespace: smart-devices
+spec:
+  podSelector:
+    matchLabels:
+      role: front-end # На кого действует правило
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              role: back-end-api # Кому разрешено входить
+      ports:
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              role: back-end-api # Куда разрешено выходить
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
