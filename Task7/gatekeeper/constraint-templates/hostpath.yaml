@@ -1,0 +1,57 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sblockhostpath
+  annotations:
+    description: "Blocks usage of hostPath volumes"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sBlockHostPath
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            allowedHostPaths:
+              type: array
+              description: "List of allowed host paths (empty means none allowed)"
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sblockhostpath
+
+        # Check if hostPath is in allowed list
+        is_allowed_hostpath(path) {
+          allowed := object.get(input.parameters, "allowedHostPaths", [])
+          allowed[_] == path
+        }
+
+        violation[{"msg": msg}] {
+          volume := input.review.object.spec.volumes[_]
+          volume.hostPath
+        
+          # If allowed list is specified, check against it
+          allowed_paths := object.get(input.parameters, "allowedHostPaths", [])
+          count(allowed_paths) > 0
+          not is_allowed_hostpath(volume.hostPath.path)
+        
+          msg := sprintf("hostPath volume %s with path %s is not allowed in %s/%s. Allowed paths: %v", 
+                        [volume.name, volume.hostPath.path, input.review.object.metadata.namespace, 
+                         input.review.object.metadata.name, allowed_paths])
+        }
+
+        violation[{"msg": msg}] {
+          volume := input.review.object.spec.volumes[_]
+          volume.hostPath
+        
+          # If no allowed paths specified, block all hostPath
+          allowed_paths := object.get(input.parameters, "allowedHostPaths", [])
+          count(allowed_paths) == 0
+        
+          msg := sprintf("hostPath volume %s with path %s is not allowed in %s/%s. hostPath volumes are prohibited.", 
+                        [volume.name, volume.hostPath.path, input.review.object.metadata.namespace, 
+                         input.review.object.metadata.name])
+        }

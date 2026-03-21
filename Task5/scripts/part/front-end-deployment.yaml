@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front-end-deployment
+  namespace: smart-devices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: front-end
+      role: front-end
+  template:
+    metadata:
+      labels:
+        app: front-end
+        role: front-end
+    spec:
+      containers:
+        - name: front-end-container
+          image: nginx:alpine
+          ports:
+            - containerPort: 80

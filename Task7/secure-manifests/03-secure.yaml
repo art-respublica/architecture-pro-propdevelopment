@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fixed-root-user-pod
+  namespace: audit-zone
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      securityContext:
+        runAsUser: 1000      # Исправлено: non-root пользователь
+        runAsGroup: 3000     # Не-root группа
+        runAsNonRoot: true   # Явно указываем запуск не от root
+        seccompProfile:
+          type: "RuntimeDefault" # Явно указываем тип
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 3000
+    runAsNonRoot: true
+    fsGroup: 2000          # Группа для томов

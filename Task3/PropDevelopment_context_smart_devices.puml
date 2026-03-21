@@ -1,0 +1,40 @@
+@startuml
+title Service "Smart Home" Context diagram
+
+top to bottom direction
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+System_Ext(intercomDevice, "Intercom Device in N house", "Intercom Device in N house")
+System_Ext(barrierDevice, "Barrier device near N house", "Barrier device near N house")
+
+System_Boundary(system, "Service 'Smart Devices'") {
+    System(intercomSystem, "Smart intercom system", "Allow owners to open the building door with recognition and to call to other apartments")
+    System(barrierSystem, "Smart barrier system", "Allow owners to open barriers with recognition")
+    System(recognitionSystem, "AI recognition system", "Recognize images with AI models")
+    System(eventStorage, "Saved data storage", "Saved data storage")
+}
+System_Boundary(houseSystem, "Devices of N house") {
+    System_Ext(managingHub, "Managing Hub", "Establish connections and interacts with devices")
+    System_Ext(intercomsDevices, "Intercoms in N house", "Intercoms in N house")
+    System_Ext(doorLocks, "Door locks in N house", "Door locks in N house")
+    System_Ext(barrierDevices, "Barriers near N house", "Barriers near N house")
+}
+
+Rel(intercomDevice, intercomSystem, "", "REST")
+Rel(barrierDevice, barrierSystem, "", "REST")
+
+Rel(intercomSystem, eventStorage, "", "SQL")
+Rel(barrierSystem, eventStorage, "", "SQL")
+
+Rel(intercomSystem, recognitionSystem, "", "grpc")
+Rel(barrierSystem, recognitionSystem, "", "grpc")
+
+Rel(intercomSystem, managingHub, "", "HTTP")
+Rel(barrierSystem, managingHub, "", "HTTP")
+
+Rel(managingHub, intercomsDevices, "", "HTTP")
+Rel(managingHub, doorLocks, "", "HTTP")
+Rel(managingHub, barrierDevices, "", "HTTP")
+
+@enduml

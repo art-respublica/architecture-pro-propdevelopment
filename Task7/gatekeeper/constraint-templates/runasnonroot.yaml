@@ -1,0 +1,61 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequirenonroot
+  annotations:
+    description: "Requires containers to run as non-root user"
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireNonRoot
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            exemptImages:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequirenonroot
+
+        # Check if container should be exempt
+        is_exempt(container) {
+          exempt_images := object.get(input.parameters, "exemptImages", [])
+          exempt_images[_] == container.image
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not is_exempt(container)
+        
+          # Check pod-level securityContext
+          pod_nonroot := input.review.object.spec.securityContext.runAsNonRoot
+        
+          # Check container-level securityContext
+          container_nonroot := container.securityContext.runAsNonRoot
+        
+          # Violation if neither is true
+          not pod_nonroot == true
+          not container_nonroot == true
+        
+          msg := sprintf("Container %s in %s/%s must set runAsNonRoot=true", 
+                        [container.name, input.review.object.metadata.namespace, input.review.object.metadata.name])
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.initContainers[_]
+          not is_exempt(container)
+        
+          pod_nonroot := input.review.object.spec.securityContext.runAsNonRoot
+          container_nonroot := container.securityContext.runAsNonRoot
+        
+          not pod_nonroot == true
+          not container_nonroot == true
+        
+          msg := sprintf("Init container %s in %s/%s must set runAsNonRoot=true", 
+                        [container.name, input.review.object.metadata.namespace, input.review.object.metadata.name])
+        }

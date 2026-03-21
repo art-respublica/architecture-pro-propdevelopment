@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fixed-hostpath-pod
+  namespace: audit-zone
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      securityContext:
+        runAsNonRoot: true   # Явно указываем запуск не от root
+        seccompProfile:
+          type: "RuntimeDefault" # Явно указываем тип
+        capabilities:
+          drop: ["ALL"]    # Дополнительно: дропаем все capabilities
+        allowPrivilegeEscalation: false  # Запрещаем эскалацию привилегий
+        readOnlyRootFilesystem: true
+      volumeMounts:
+        - name: ephemeral-storage
+          mountPath: /data
+  volumes:
+    - name: ephemeral-storage
+      emptyDir: {}  # Исправлено: emptyDir вместо hostPath

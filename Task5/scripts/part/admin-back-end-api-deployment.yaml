@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-back-end-api-deployment
+  namespace: smart-devices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin-back-end-api
+      role: admin-back-end-api
+  template:
+    metadata:
+      labels:
+        app: admin-back-end-api
+        role: admin-back-end-api
+    spec:
+      containers:
+        - name: admin-back-end-api-container
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
