@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fixed-privileged-pod
+  namespace: audit-zone
+spec:
+  containers:
+    - name: nginx
+      image: nginx
+      securityContext:
+        privileged: false  # Исправлено: false вместо true
+        runAsNonRoot: true   # Явно указываем запуск не от root
+        seccompProfile:
+          type: "RuntimeDefault" # Явно указываем тип
+        capabilities:
+          drop: ["ALL"]    # Дополнительно: дропаем все capabilities
+        allowPrivilegeEscalation: false  # Запрещаем эскалацию привилегий
